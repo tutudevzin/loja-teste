@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loja Exemplo - Sistema Completo</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 0; background: #f4f4f4; }
+
+    header {
+      background: #222; color: #fff;
+      padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    header h1 { margin: 0; font-size: 1.4rem; }
+    header input[type="text"] {
+      padding: 0.5rem; border-radius: 4px; border: none; width: 250px;
+    }
+    header .cart-info { font-size: 0.9rem; white-space: nowrap; }
+    header .user-info { font-size: 0.8rem; text-align: right; }
+
+    main { padding: 1.5rem; }
+
+    .hidden { display: none !important; }
+
+    /* Layout loja */
+    .loja-layout {
+      display: flex; gap: 2rem; margin-top: 1rem;
+    }
+    .products {
+      flex: 2;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .product-card {
+      background: #fff; border-radius: 6px; padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .product-card h2 { font-size: 1.1rem; margin: 0 0 0.5rem; }
+    .product-card p { margin: 0.3rem 0; font-size: 0.9rem; }
+    .price { font-weight: bold; margin: 0.5rem 0; }
+    .product-card button {
+      margin-top: 0.5rem; padding: 0.5rem;
+      border: none; border-radius: 4px;
+      background: #28a745; color: #fff; cursor: pointer; font-size: 0.9rem;
+    }
+    .product-card button:hover { background: #218838; }
+
+    .cart {
+      flex: 1;
+      background: #fff; border-radius: 6px; padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-height: 70vh; overflow-y: auto;
+    }
+    .cart-item {
+      border-bottom: 1px solid #eee; padding: 0.5rem 0;
+      display: flex; justify-content: space-between; font-size: 0.9rem;
+    }
+    .cart-total { margin-top: 1rem; font-weight: bold; font-size: 1rem; text-align: right; }
+    .checkout-btn {
+      width: 100%; margin-top: 1rem; padding: 0.75rem;
+      border: none; border-radius: 4px;
+      background: #007bff; color: #fff; cursor: pointer; font-size: 0.95rem;
+    }
+    .checkout-btn:hover { background: #0069d9; }
+
+    .remove-btn {
+      background: #dc3545; color: #fff;
+      border: none; padding: 3px 6px;
+      border-radius: 4px; margin-left: 8px;
+      cursor: pointer; font-size: 0.8rem;
+    }
+    .remove-btn:hover { background: #c82333; }
+
+    /* Telas de login/cadastro */
+    .auth-container {
+      max-width: 400px; margin: 2rem auto; background: #fff;
+      padding: 1.5rem; border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .auth-container h2 { margin-top: 0; }
+    .auth-container label { display: block; margin-top: 0.5rem; font-size: 0.9rem; }
+    .auth-container input, .auth-container select {
+      width: 100%; padding: 0.5rem; margin-top: 0.2rem;
+      border-radius: 4px; border: 1px solid #ccc;
+    }
+    .auth-container button {
+      margin-top: 1rem; width: 100%; padding: 0.6rem;
+      border: none; border-radius: 4px;
+      background: #007bff; color: #fff; cursor: pointer;
+    }
+    .auth-container button:hover { background: #0069d9; }
+    .auth-switch { margin-top: 0.8rem; font-size: 0.85rem; text-align: center; cursor: pointer; color: #007bff; }
+
+    /* Modal pagamento */
+    #payment-modal, #admin-modal {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none; justify-content: center; align-items: center;
+      z-index: 10;
+    }
+    .modal-box {
+      background: #fff; padding: 1.5rem; border-radius: 8px;
+      width: 360px; max-width: 95%;
+    }
+    .modal-box h2 { margin-top: 0; }
+    .modal-box button {
+      width: 100%; margin-top: 0.5rem; padding: 0.6rem;
+      border: none; border-radius: 4px; cursor: pointer;
+      background: #28a745; color: #fff;
+    }
+    .modal-box button.secondary { background: #dc3545; }
+    .modal-box label { display: block; margin-top: 0.5rem; font-size: 0.9rem; }
+    .modal-box input, .modal-box textarea {
+      width: 100%; padding: 0.5rem; margin-top: 0.2rem;
+      border-radius: 4px; border: 1px solid #ccc; font-size: 0.9rem;
+    }
+    .modal-box textarea { resize: vertical; }
+
+    /* Painel admin */
+    .admin-panel {
+      margin-top: 2rem;
+      background: #fff; padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .admin-panel h2 { margin-top: 0; }
+    .admin-table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    }
+    .admin-table th, .admin-table td {
+      border: 1px solid #ddd; padding: 0.4rem;
+    }
+    .admin-table th { background: #f0f0f0; }
+
+    @media (max-width: 800px) {
+      .loja-layout { flex-direction: column; }
+      header { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Minha Loja</h1>
+
+    <input type="text" id="search" placeholder="Buscar produtos...">
+
+    <div class="cart-info">
+      Itens: <span id="cart-count">0</span> |
+      Total: R$ <span id="cart-total-header">0,00</span>
+    </div>
+
+    <div class="user-info">
+      <div id="user-label">Não logado</div>
+      <button id="logout-btn" class="hidden" style="margin-top:4px;padding:3px 8px;border:none;border-radius:4px;background:#dc3545;color:#fff;cursor:pointer;font-size:0.75rem;">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- TELAS DE AUTENTICAÇÃO -->
+    <section id="login-section" class="auth-container">
+      <h2>Login</h2>
+      <label>Email:</label>
+      <input type="email" id="login-email">
+      <label>Senha:</label>
+      <input type="password" id="login-senha">
+      <button id="login-submit">Entrar</button>
+      <div class="auth-switch" id="go-cadastro">Não tem conta? Cadastre-se</div>
+    </section>
+
+    <section id="cadastro-section" class="auth-container hidden">
+      <h2>Cadastro</h2>
+      <label>Nome:</label>
+      <input type="text" id="cad-nome">
+      <label>Email:</label>
+      <input type="email" id="cad-email">
+      <label>Senha:</label>
+      <input type="password" id="cad-senha">
+      <label>Cargo (simulação):</label>
+      <select id="cad-cargo">
+        <option value="cliente">Cliente</option>
+        <option value="moderador">Moderador</option>
+        <option value="dono">Dono</option>
+      </select>
+      <button id="cad-submit">Cadastrar</button>
+      <div class="auth-switch" id="go-login">Já tem conta? Entrar</div>
+    </section>
+
+    <!-- LOJA -->
+    <section id="loja-section" class="hidden">
+      <div class="loja-layout">
+        <section class="products">
+          <div class="product-card" data-name="Camisa" data-price="79.90">
+            <h2>Camisa Básica</h2>
+            <p>Camisa 100% algodão, diversas cores.</p>
+            <p class="price">R$ 79,90</p>
+            <button class="add-to-cart-btn">Adicionar ao carrinho</button>
+          </div>
+
+          <div class="product-card" data-name="Calça Jeans" data-price="129.90">
+            <h2>Calça Jeans</h2>
+            <p>Jeans confortável, vários tamanhos.</p>
+            <p class="price">R$ 129,90</p>
+            <button class="add-to-cart-btn">Adicionar ao carrinho</button>
+          </div>
+
+          <div class="product-card" data-name="Tênis" data-price="199.90">
+            <h2>Tênis Esportivo</h2>
+            <p>Ideal para caminhada e corrida.</p>
+            <p class="price">R$ 199,90</p>
+            <button class="add-to-cart-btn">Adicionar ao carrinho</button>
+          </div>
+
+          <div class="product-card" data-name="Boné" data-price="39.90">
+            <h2>Boné</h2>
+            <p>Boné ajustável, estilo casual.</p>
+            <p class="price">R$ 39,90</p>
+            <button class="add-to-cart-btn">Adicionar ao carrinho</button>
+          </div>
+        </section>
+
+        <aside class="cart">
+          <h2>Carrinho</h2>
+          <div id="cart-items">
+            <p>Nenhum item no carrinho.</p>
+          </div>
+          <div class="cart-total">
+            Total: R$ <span id="cart-total">0,00</span>
+          </div>
+          <button class="checkout-btn" id="checkout-btn">Finalizar compra</button>
+        </aside>
+      </div>
+
+      <!-- Painel básico de pedidos do cliente -->
+      <div class="admin-panel" id="cliente-pedidos">
+        <h2>Meus pedidos</h2>
+        <table class="admin-table" id="tabela-meus-pedidos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Itens</th>
+              <th>Total</th>
+              <th>Localização</th>
+              <th>Data/Hora</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Painel admin/moderador -->
+      <div class="admin-panel hidden" id="admin-panel">
+        <h2>Pedidos (Dono e Moderadores)</h2>
+        <table class="admin-table" id="tabela-todos-pedidos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Email</th>
+              <th>Itens</th>
+              <th>Total</th>
+              <th>Localização</th>
+              <th>Data/Hora</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DE PAGAMENTO + LOCALIZAÇÃO -->
+  <div id="payment-modal">
+    <div class="modal-box">
+      <h2>Finalizar compra</h2>
+      <label>Endereço completo:</label>
+      <textarea id="loc-endereco" rows="2" placeholder="Rua, número, bairro"></textarea>
+      <label>Cidade:</label>
+      <input type="text" id="loc-cidade" placeholder="Cidade">
+      <label>Estado:</label>
+      <input type="text" id="loc-estado" placeholder="Estado">
+      <label>Observações:</label>
+      <textarea id="loc-obs" rows="2" placeholder="Ex: horário de entrega, referência"></textarea>
+
+      <h3>Forma de pagamento</h3>
+      <button id="pay-card">Cartão de Crédito (simulação)</button>
+      <button id="pay-pix">Pix (simulação)</button>
+      <button id="pay-boleto">Boleto (simulação)</button>
+      <button class="secondary" id="close-payment">Cancelar</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------- UTILIDADES ----------
+    function formatCurrency(value) {
+      return value.toFixed(2).replace('.', ',');
+    }
+
+    function loadUsers() {
+      return JSON.parse(localStorage.getItem('usuarios') || '[]');
+    }
+    function saveUsers(users) {
+      localStorage.setItem('usuarios', JSON.stringify(users));
+    }
+
+    function loadOrders() {
+      return JSON.parse(localStorage.getItem('pedidos') || '[]');
+    }
+    function saveOrders(pedidos) {
+      localStorage.setItem('pedidos', JSON.stringify(pedidos));
+    }
+
+    function setCurrentUser(user) {
+      if (user) localStorage.setItem('currentUser', JSON.stringify(user));
+      else localStorage.removeItem('currentUser');
+    }
+    function getCurrentUser() {
+      const u = localStorage.getItem('currentUser');
+      return u ? JSON.parse(u) : null;
+    }
+
+    // ---------- ESTADO PRINCIPAL ----------
+    let cart = [];
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartTotalElement = document.getElementById('cart-total');
+    const cartTotalHeaderElement = document.getElementById('cart-total-header');
+    const cartCountElement = document.getElementById('cart-count');
+
+    const loginSection = document.getElementById('login-section');
+    const cadastroSection = document.getElementById('cadastro-section');
+    const lojaSection = document.getElementById('loja-section');
+    const userLabel = document.getElementById('user-label');
+    const logoutBtn = document.getElementById('logout-btn');
+    const adminPanel = document.getElementById('admin-panel');
+    const tabelaTodosPedidosBody = document.querySelector('#tabela-todos-pedidos tbody');
+    const tabelaMeusPedidosBody = document.querySelector('#tabela-meus-pedidos tbody');
+
+    // ---------- ATUALIZA INTERFACE PELO LOGIN ----------
+    function updateAuthUI() {
+      const user = getCurrentUser();
+      if (!user) {
+        loginSection.classList.remove('hidden');
+        cadastroSection.classList.add('hidden');
+        lojaSection.classList.add('hidden');
+        userLabel.textContent = 'Não logado';
+        logoutBtn.classList.add('hidden');
+      } else {
+        loginSection.classList.add('hidden');
+        cadastroSection.classList.add('hidden');
+        lojaSection.classList.remove('hidden');
+        userLabel.textContent = user.nome + ' (' + user.cargo + ')';
+        logoutBtn.classList.remove('hidden');
+
+        // mostra painel admin se moderador/dono
+        if (user.cargo === 'dono' || user.cargo === 'moderador') {
+          adminPanel.classList.remove('hidden');
+        } else {
+          adminPanel.classList.add('hidden');
+        }
+
+        renderOrders();
+      }
+    }
+
+    // ---------- CARRINHO ----------
+    function updateCartDisplay() {
+      cartItemsContainer.innerHTML = '';
+
+      if (cart.length === 0) {
+        cartItemsContainer.innerHTML = '<p>Nenhum item no carrinho.</p>';
+      } else {
+        cart.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'cart-item';
+          div.innerHTML = `
+            <span>${item.name} (x${item.quantity})</span>
+            <span>
+              R$ ${formatCurrency(item.price * item.quantity)}
+              <button class="remove-btn" data-name="${item.name}">Remover</button>
+            </span>
+          `;
+          cartItemsContainer.appendChild(div);
+        });
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      cartTotalElement.textContent = formatCurrency(total);
+      cartTotalHeaderElement.textContent = formatCurrency(total);
+      cartCountElement.textContent = count;
+
+      document.querySelectorAll('.remove-btn').forEach(button => {
+        button.addEventListener('click', event => {
+          const name = event.target.getAttribute('data-name');
+          removeFromCart(name);
+        });
+      });
+    }
+
+    function addToCart(name, price) {
+      const existingItem = cart.find(item => item.name === name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ name, price, quantity: 1 });
+      }
+      updateCartDisplay();
+    }
+
+    function removeFromCart(name) {
+      const item = cart.find(i => i.name === name);
+      if (!item) return;
+      if (item.quantity > 1) item.quantity -= 1;
+      else cart = cart.filter(i => i.name !== name);
+      updateCartDisplay();
+    }
+
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+      button.addEventListener('click', event => {
+        const card = event.target.closest('.product-card');
+        const name = card.getAttribute('data-name');
+        const price = parseFloat(card.getAttribute('data-price'));
+        addToCart(name, price);
+      });
+    });
+
+    // ---------- BUSCA ----------
+    const searchInput = document.getElementById('search');
+    const productCards = document.querySelectorAll('.product-card');
+    searchInput.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase();
+      productCards.forEach(card => {
+        const name = card.getAttribute('data-name').toLowerCase();
+        card.style.display = name.includes(term) ? 'flex' : 'none';
+      });
+    });
+
+    // ---------- MODAL DE PAGAMENTO & PEDIDOS ----------
+    const paymentModal = document.getElementById('payment-modal');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    const locEndereco = document.getElementById('loc-endereco');
+    const locCidade = document.getElementById('loc-cidade');
+    const locEstado = document.getElementById('loc-estado');
+    const locObs = document.getElementById('loc-obs');
+
+    checkoutBtn.addEventListener('click', () => {
+      if (cart.length === 0) {
+        alert('Seu carrinho está vazio.');
+        return;
+      }
+      const user = getCurrentUser();
+      if (!user) {
+        alert('Você precisa estar logado para finalizar a compra.');
+        return;
+      }
+      paymentModal.style.display = 'flex';
+    });
+
+    document.getElementById('close-payment').onclick = () => {
+      paymentModal.style.display = 'none';
+    };
+
+    function criarPedido(metodo) {
+      const user = getCurrentUser();
+      if (!user) return;
+
+      const pedidos = loadOrders();
+      const id = pedidos.length ? pedidos[pedidos.length - 1].id + 1 : 1;
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const itensStr = cart.map(i => `${i.name} x${i.quantity}`).join(', ');
+
+      const localizacao = `
+Endereço: ${locEndereco.value}
+Cidade: ${locCidade.value} - ${locEstado.value}
+Obs: ${locObs.value}
+      `.trim();
+
+      const pedido = {
+        id,
+        usuarioId: user.id || null, // id simulado
+        nome: user.nome,
+        email: user.email,
+        itens: itensStr,
+        total: total,
+        localizacao,
+        metodo,
+        dataHora: new Date().toLocaleString('pt-BR')
+      };
+
+      pedidos.push(pedido);
+      saveOrders(pedidos);
+
+      cart = [];
+      updateCartDisplay();
+      paymentModal.style.display = 'none';
+      locEndereco.value = '';
+      locCidade.value = '';
+      locEstado.value = '';
+      locObs.value = '';
+
+      alert('Pedido registrado! (simulação de pagamento: ' + metodo + ')');
+
+      renderOrders();
+    }
+
+    document.getElementById('pay-card').onclick = () => criarPedido('Cartão de Crédito');
+    document.getElementById('pay-pix').onclick = () => criarPedido('Pix');
+    document.getElementById('pay-boleto').onclick = () => criarPedido('Boleto');
+
+    // ---------- LOGIN & CADASTRO (SIMULAÇÃO) ----------
+    document.getElementById('go-cadastro').onclick = () => {
+      loginSection.classList.add('hidden');
+      cadastroSection.classList.remove('hidden');
+    };
+    document.getElementById('go-login').onclick = () => {
+      cadastroSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+    };
+
+    document.getElementById('cad-submit').onclick = () => {
+      const nome = document.getElementById('cad-nome').value.trim();
+      const email = document.getElementById('cad-email').value.trim();
+      const senha = document.getElementById('cad-senha').value.trim();
+      const cargo = document.getElementById('cad-cargo').value;
+
+      if (!nome || !email || !senha) {
+        alert('Preencha todos os campos.');
+        return;
+      }
+
+      const users = loadUsers();
+      if (users.some(u => u.email === email)) {
+        alert('Já existe um usuário com esse email.');
+        return;
+      }
+
+      const id = users.length ? users[users.length - 1].id + 1 : 1;
+      users.push({ id, nome, email, senha, cargo });
+      saveUsers(users);
+      alert('Cadastro realizado! Agora faça login.');
+      cadastroSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+    };
+
+    document.getElementById('login-submit').onclick = () => {
+      const email = document.getElementById('login-email').value.trim();
+      const senha = document.getElementById('login-senha').value.trim();
+      const users = loadUsers();
+
+      const user = users.find(u => u.email === email && u.senha === senha);
+      if (!user) {
+        alert('Email ou senha inválidos.');
+        return;
+      }
+      setCurrentUser(user);
+      updateAuthUI();
+    };
+
+    logoutBtn.onclick = () => {
+      setCurrentUser(null);
+      cart = [];
+      updateCartDisplay();
+      updateAuthUI();
+    };
+
+    // ---------- RENDERIZAÇÃO DE PEDIDOS ----------
+    function renderOrders() {
+      const user = getCurrentUser();
+      const pedidos = loadOrders();
+      tabelaMeusPedidosBody.innerHTML = '';
+      tabelaTodosPedidosBody.innerHTML = '';
+
+      if (!user) return;
+
+      // Meus pedidos (cliente)
+      const meus = pedidos.filter(p => p.email === user.email);
+      meus.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.id}</td>
+          <td>${p.itens}</td>
+          <td>R$ ${formatCurrency(p.total)}</td>
+          <td>${p.localizacao.replace(/\n/g, '<br>')}</td>
+          <td>${p.dataHora}</td>
+        `;
+        tabelaMeusPedidosBody.appendChild(tr);
+      });
+
+      // Todos pedidos (admin/mod)
+      if (user.cargo === 'dono' || user.cargo === 'moderador') {
+        pedidos.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>${p.email}</td>
+            <td>${p.itens}</td>
+            <td>R$ ${formatCurrency(p.total)}</td>
+            <td>${p.localizacao.replace(/\n/g, '<br>')}</td>
+            <td>${p.dataHora}</td>
+          `;
+          tabelaTodosPedidosBody.appendChild(tr);
+        });
+      }
+    }
+
+    // ---------- INICIALIZAÇÃO ----------
+    updateCartDisplay();
+    updateAuthUI();
+  </script>
+</body>
+</html>
